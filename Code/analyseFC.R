@@ -1,10 +1,10 @@
 rm(list=ls())
 library(dplyr)
 library(plyranges)
-library(regioneR) # conda install -c bioconda bioconductor-regioner
+#library(regioneR) # conda install -c bioconda bioconductor-regioner
 library(parallel)
 library(ggplot2) 
-library(wPerm) # conda install -c r r-wperm
+#library(wPerm) # conda install -c r r-wperm
 
 blacklist_fname = "/Volumes/Elements/MYCNAmplicon/Data/hg19-blacklist.v2.bed"
 hmcan_path = "/Volumes/Elements/nb-cl-chipseq-results/hmcan/"
@@ -242,12 +242,17 @@ rm(wholegenome_bigwig,wholegenome_inputbigwig,
    amplified_regions_peaks, amplified_regions_bigwig,
    amplified_regions_inputbigwig)
 save.image(paste0(results_path, "Boeva_H3K27ac_PeakSizeAnalysis.Rdata"))
+#load(paste0(results_path, "Boeva_H3K27ac_PeakSizeAnalysis.Rdata"))
 
 
 # ------------------------------------------------------------------------------
 # Plotting of simulations
 # ------------------------------------------------------------------------------
 source("/Volumes/Elements/MYCNAmplicon/Code/CustomThemes.R")
+
+simulation_overview %>%
+  write.table("/Volumes/Elements/MYCNAmplicon/Results/SourceData/PeakAnalysisSimulations.txt",
+              quote = F, col.names = T, row.names=F, sep = "\t")
 
 simulation_overview %>%
   group_by(Sample, RandomOrReal, SimulationNumber) %>%

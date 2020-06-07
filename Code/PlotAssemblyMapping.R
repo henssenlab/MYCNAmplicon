@@ -105,6 +105,8 @@ paf %>%
   ggsave("/Volumes/Elements/MYCNAmplicon/Results/Kelly_NanoporeDeNovoAssembly_contig_31_maptochr2_Layout2.pdf", 
          height = 2, width=1.5)
 
+
+
 # ------------------------------------------------------------------------------
 # Plot CHP-212 de novo assembly
 # ------------------------------------------------------------------------------

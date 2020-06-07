@@ -82,19 +82,6 @@ for (i in 1:length(mna_profiles_binned)){
 }
 mna_profiles_binned_tb = do.call(rbind, lapply(mna_profiles_binned, as_tibble))
 
-samples = samples %>% filter(Name %in% unique(mna_profiles_binned_tb$Name))
-mna_profiles_binned_tb = 
-  mna_profiles_binned_tb %>%
-  full_join(samples, by= "Name") 
-
-mna_profiles_binned_tb %>%
-  dplyr::select(seqnames, start, isAmp, Name, Age, Stage, OStime, OS, Platform, chr1p, chr17q) %>%
-  mutate(AgeQuartile = as.factor(ntile(Age, 4))) %>%
-  mutate(longTermSurvival = (OS == 0) & (OStime > 5*365)) %>% 
-  dplyr::rename(Chromosome = seqnames, Start = start, isAmplified = isAmp) %>%
-  mutate(isAmplified = as.logical(isAmplified)) %>%
-  write.table("/Volumes/Elements/MYCNAmplicon/Results/SourceData/MNAsamples_chr2_10kbbins.txt",
-              col.names=T, row.names=F, quote = F, sep = "\t")
 
 # ------------------------------------------------------------------------------
 # Plot amplification meta-profile
@@ -127,6 +114,10 @@ mna_profiles_binned_tb %>%
   ggtitle("Amplified Regions on chr2 (Depuydt et al. 2018)") +
   ggsave("/Volumes/Elements/MYCNAmplicon/Results/AmplifiedOnChr2_Zoom_All.pdf",
          height = 5, width = 5, useDingbats=F)
+
+samples = samples %>% filter(Name %in% unique(mna_profiles_binned_tb$Name))
+mna_profiles_binned_tb = mna_profiles_binned_tb %>%
+  full_join(samples, by= "Name") 
 
 # copy number profile by age quartile
 mna_profiles_binned_tb %>%
@@ -374,7 +365,7 @@ roi = GRanges(seqnames = "chr2",
               ranges = IRanges(start=16080683, end=16087129))
 roi_length = width(roi)
 randomized_profiles = list()
-reps = 100 # change to higher numbers when running on the cluster
+reps = 100
 nrandomsamples = reps*240
 for (i in 1:nrandomsamples){ # took about 10min
   random_patient = mna_profiles[[sample(names(mna_profiles), 1)]]
@@ -386,8 +377,24 @@ for (i in 1:nrandomsamples){ # took about 10min
   randomized_profiles[[i]] = random_patient
 }
 
+library(parallel)
+cores = detectCores()
+# randomized_profiles = mclapply(1:nrandomsamples,
+#                                function (i) {
+#                                  set.seed(i)
+#                                  random_patient = mna_profiles[[sample(names(mna_profiles), 1)]]
+#                                  random_patient = random_patient[width(random_patient)>roi_length]
+#                                  random_interval = random_patient[sample(length(random_patient), 1, prob=width(random_patient)-roi_length)]
+#                                  random_offset = sample.int(width(random_interval)-roi_length,1)
+#                                  absolute_offset = start(roi) - (start(random_interval) + random_offset)
+#                                  random_patient = trim(shift(random_patient, absolute_offset))
+#                                  return(random_patient)
+#                                },
+#                                mc.cores = cores)
+
 randomized_profiles_cov = lapply(randomized_profiles, coverage)
 randomized_profiles_binned = lapply(randomized_profiles_cov, function (this_profile_cov) binnedAverage(bins_focus, numvar = this_profile_cov, varname = "isAmp"))
+#randomized_profiles_binned_tb = do.call(rbind, lapply(randomized_profiles_binned, as_tibble))
 randomized_profiles_binned_tb = as_tibble(do.call(c, randomized_profiles_binned))
 
 randomized_profiles_binned_tb %>%
@@ -409,6 +416,9 @@ randomized_profiles_binned_tb %>%
   annotate(xmin=16080683, xmax=16087129, ymin=0, ymax=Inf, geom="rect", color=NA, fill="black", alpha=0.2) + # MYCN
   annotate(xmin=16190549, xmax=16225923, ymin=0, ymax=Inf, geom="rect", color=NA, fill="black", alpha=0.2) + # GACAT3
   annotate(xmin=16730727, xmax=16847599, ymin=0, ymax=Inf, geom="rect", color=NA, fill="black", alpha=0.2) #+ # FAM49A
+#ggsave("~/Desktop/copynumber_HR_NB-master/AmplifiedOnChr2__Randomized_MYCNFocus_All_GenesMarked.pdf",
+#       height = 3, width = 5, useDingbats=F)
+
 
 # Plot Real and Randomized Data in one plot
 mna_profiles_binned_tb$RealOrRandomized = "Real"
@@ -485,7 +495,7 @@ FCOverChance %>%
          height = 3, width = 5, useDingbats=F)
 
 # ------------------------------------------------------------------------------
-# Fig 2a
+# Make Fig 2a
 # ------------------------------------------------------------------------------
 genes_df = 
   data.frame(
@@ -577,6 +587,7 @@ ggsave("/Volumes/Elements/MYCNAmplicon/Results/Fig2a_Nov23.pdf",
          nrow = 3, 
          heights = c(0.05,0.05,1)),
        height=2, width=3, onefile = FALSE, useDingbats = F)
+
 
 
 # ------------------------------------------------------------------------------
@@ -705,9 +716,8 @@ upset(fromList(upset_list_randomized),
 dev.off()
 
 # ------------------------------------------------------------------------------
-# Investigate those that do not have enhancer e4
+# Investigate those that do not have the enhancer
 # ------------------------------------------------------------------------------
-
 rois = read_bed("/Volumes/Elements/MYCNAmplicon/Results/Boeva_nMNA_MYCN_Enhancers.bed")
 rois = rois[rois$name != "MYCNp"]
 
@@ -732,6 +742,7 @@ enhancer_overlap_df %>%
   theme_kons1()
 
 # Do samples without the Enhancer have more amplicon parts?
+
 enhancer_overlap_df %>% 
   group_by(e4, nAmpliconParts) %>% 
   summarise(n=dplyr::n()) %>%
@@ -896,8 +907,6 @@ for (roi_idx in 1:length(rois)){
   }
 }
 
-enhancer_overlap_df
-
 enhancer_overlap_df %>% 
   ggplot(aes(x=e4, y=nAmpliconParts)) +
   geom_jitter() + 
@@ -955,14 +964,6 @@ e4less_samples =
   enhancer_overlap_df %>% 
   filter(!e4) %>% 
   .$Sample
-
-mna_profiles_allchr %>%
-  unlist() %>% 
-  as_tibble() %>%
-  dplyr::select(Sample, seqnames, start, end, logratio, annotation) %>%
-  mutate(SampleClass = ifelse(Sample %in% e4less_samples, "Class II", "Class I")) %>% 
-  write.table("/Volumes/Elements/MYCNAmplicon/Results/SourceData/MNASamples_AmplifiedSegments.txt",
-              col.names=T, row.names=F, quote = F, sep = "\t")
 
 mna_profiles[e4less_samples] %>%
   write_bed("/Volumes/Elements/MYCNAmplicon/Results/MNAProfilesChr2_E4less.bed")
@@ -1298,9 +1299,6 @@ pdf("/Volumes/Elements/MYCNAmplicon/Results/Clinical_MNA_LacksE4_Forest.pdf",
 ggforest(fit.coxph, data = survival_data)
 dev.off()
 
-survival_data1 = survival_data
-
-
 odc1 = GRanges(
   seqnames = c(              "chr2"  ),
   ranges = IRanges(start = c(10580094),
@@ -1350,8 +1348,6 @@ ggforest(fit.coxph, data = survival_data)
 dev.off()
 odc1coampl_samples = survival_data[survival_data$ODC1CoAmpl == "TRUE","Sample"] %>% .$Sample
 
-survival_data_odc = survival_data
-
 greb1 = GRanges(
   seqnames = c(              "chr2"  ),
   ranges = IRanges(start = c(11674242),
@@ -1369,7 +1365,6 @@ survival_data =
   dplyr::select(Sample,OS,OStime,GREB1CoAmpl) %>%
   mutate(GREB1CoAmpl = factor(GREB1CoAmpl, levels=c("TRUE", "FALSE"))) %>% 
   distinct()
-survival_data_greb = survival_data
 survival_data %>%
   group_by(GREB1CoAmpl) %>% 
   summarise(n=n_distinct(Sample))
@@ -1404,7 +1399,6 @@ survival_data =
   dplyr::select(Sample,OS,OStime,ALKCoAmpl) %>%
   mutate(ALKCoAmpl = factor(ALKCoAmpl, levels=c("TRUE", "FALSE"))) %>% 
   distinct()
-survival_data_alk = survival_data
 survival_data %>%
   group_by(ALKCoAmpl) %>% 
   summarise(n=n_distinct(Sample))
@@ -1433,14 +1427,6 @@ dev.off()
 
 odc1coampl_samples = survival_data[survival_data$ODC1CoAmpl == "TRUE","Sample"] %>% .$Sample
 alkcoampl_samples = survival_data[survival_data$ALKCoAmpl == "TRUE","Sample"] %>% .$Sample
-
-full_join(survival_data1, survival_data_odc) %>%
-  full_join(survival_data_greb) %>% 
-  full_join(survival_data_alk) %>%
-  mutate(Class = ifelse(LacksE4, "Class II", "Class I")) %>%
-  dplyr::select(-LacksE4) %>%
-  write.table("/Volumes/Elements/MYCNAmplicon/Results/SourceData/MNASamples_ClinicalData.txt",
-              col.names=T, row.names=F, quote = F, sep = "\t")
 
 # ------------------------------------------------------------------------------
 # Playground Clinical analysis

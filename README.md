@@ -12,5 +12,6 @@ Data analysis for Helmsauer, Valieva, Ali et al. *Enhancer hijacking determines 
 - `EnhancerVsCRCChIPseq.R` describes overlap between core regulatory circuit factor ChIP-seq and *MYCN*-driving enhancers
 - `prepareRNAseq.R` parses and normalizes RNA-seq data
 - `PlotAssemblyMapping.R` plots mapping of *de novo* assembled contigs to hg19
+- `virtual4C.R` creates virtual 4C tracks
 
 Please do not hesitate to contact us at henssenlab@gmail.com.

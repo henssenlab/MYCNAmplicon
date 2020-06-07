@@ -89,7 +89,7 @@ cRE.fig = cRE %>%
 cRE$class = "cRE"
 
 ggsave(
-  "/Volumes/Elements/MYCNAmplicon/Results/RadaIglesiasH3K27ac.pdf",
+  "/Volumes/Elements/MYCNAmplicon/Results/RadaIglesiasH3K27ac_Feb28.pdf",
   egg::ggarrange(
     genes.fig +
       theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()), 
@@ -103,12 +103,14 @@ ggsave(
       theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
     make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Rada_NEC_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color = "steelblue") +
       theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
-    make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Rada_NCC_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color="steelblue"),
+    make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Rada_NCC_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color="steelblue") +
+      theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+    make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Roadmap_FetalAdrenal_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color="steelblue"),
     #  theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
     #make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_hNCC_rep1_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color="steelblue") +
     #  theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
     #make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_hNCC_rep2_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color="steelblue"),
-    nrow=8,
-    heights = c(0.25,0.25,0.25,0.25,1,1,1,1)),
-  height=2, width=2.5, onefile=F, useDingbats=F)
+    nrow=9,
+    heights = c(0.25,0.25,0.25,0.25,1,1,1,1,1)),
+  height=2.2, width=2.5, onefile=F, useDingbats=F)
  

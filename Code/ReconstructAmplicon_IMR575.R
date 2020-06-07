@@ -1,11 +1,14 @@
 rm(list=ls())
-library(gTrack)
-devtools::load_all("/Volumes/Elements/MYCNAmplicon/Ext/gGnome-master") # includes my changes
+#devtools::install_local("/Volumes/Elements/MYCNAmplicon/Ext/gTrack-master") # includes my changes
+#library(gTrack)
+#devtools::load_all("/Volumes/Elements/MYCNAmplicon/Ext/gGnome-master") # includes my changes
 library(BSgenome.Hsapiens.UCSC.hg19)
 library(ggplot2)
 library(dplyr)
 library(parallel)
 library(plyranges)
+library(gUtils)
+library(gGnome)
 
 # ------------------------------------------------------------------------------
 # Read Copy number data
@@ -219,6 +222,8 @@ window = GRanges(
 )
 
 hic_fname = "/Volumes/Elements/MariaSalaDaten/HiC/IMR5/IMR5_hg19_canonical_MAPQ30_merged.hic"
+hic_fname = "/Volumes/Elements/MariaSalaDaten/robert_email_20-03-31/IMR_5_75_merged_shallow_sequencing_MAPQ30.hic" # new April
+
 chrs = "chr2" #standardChromosomes(BSgenome.Hsapiens.UCSC.hg19)[1:24] 
 binsizekb = 25
 
@@ -311,12 +316,16 @@ gt.CLBGA_GATA3 = make_bigwig_gTrack("/Volumes/Elements/nb-cl-chipseq-results/bam
 gt.CLBGA_PHOX2B = make_bigwig_gTrack("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_PHOX2B.trimmed.bwa_hg19.rmdup.filtered.bw", name = "CLB-GA PHOX2B", y0=0, y1=10)
 gt.CLBGA_HAND2 = make_bigwig_gTrack("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_HAND2.trimmed.bwa_hg19.rmdup.filtered.bw", name = "CLB-GA HAND2", y0=0, y1=10)
 
-pdf("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction2.pdf", height=14, width=7, onefile=F, useDingbats = F)
+pdf("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction2_April6.pdf", height=14, width=7, onefile=F, useDingbats = F)
 plot(c(gencode, gt.LowMYCNExpr_H3K27ac, gt.copynumber, sv.gt, reconstruction.gt, gt.ATAC, gt.H3K27ac, gt.CTCF, gt.4C, gt.hic), window,
      y.grid.col=F, y.grid.lwd=F, sep.lwd=0, sep.col=F, yaxis.pretty = 1)
 dev.off()
 #save.image("/Volumes/Elements/MYCNAmplicon/Workspace/IMR575Reconstruction.Rdata")
-load("/Volumes/Elements/MYCNAmplicon/Workspace/IMR575Reconstruction.Rdata")
+#load("/Volumes/Elements/MYCNAmplicon/Workspace/IMR575Reconstruction.Rdata")
+
+save.image("/Volumes/Elements/MYCNAmplicon/Workspace/IMR575Reconstruction_April6.Rdata")
+load("/Volumes/Elements/MYCNAmplicon/Workspace/IMR575Reconstruction_April6.Rdata")
+
 
 # ------------------------------------------------------------------------------
 se = read_bed("/Volumes/Elements/MYCNAmplicon/Results/Boeva_lowMYCN_CRCdriven_SE.bed")
@@ -333,12 +342,13 @@ make_bigwig_gTrack = function(fname, name = "NoName", y0=0, y1=50){
   return(this_gt)
 }
 gt.CTCF = make_bigwig_gTrack("/Volumes/Elements/nb-cl-chipseq-results/bam/MundlosLab_IMR-5-75_CTCF.trimmed.bwa_hg19.rmdup.filtered.bw", name = "CTCF", y0=0, y1=20)
-pdf("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction_Dec11.pdf", height=12, width=7, onefile=F, useDingbats = F)
+#pdf("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction_Dec11.pdf", height=12, width=7, onefile=F, useDingbats = F)
+pdf("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction_FINAL_April6.pdf", height=12, width=7, onefile=F, useDingbats = F)
 plot(c(gencode, gt.se, gt.copynumber, reconstruction.gt, gt.H3K27ac, gt.CTCF, gt.4C, gt.hic), window,
      y.grid.col=F, y.grid.lwd=F, sep.lwd=0, sep.col=F, yaxis.pretty = 1)
 dev.off()
 
-longest_walk_nodups$grl %>% 
-  as_tibble() %>% 
-  write.table("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction.txt",
-              sep="\t", quote=F)
+# longest_walk_nodups$grl %>% 
+#   as_tibble() %>% 
+#   write.table("/Volumes/Elements/MYCNAmplicon/Results/IMR575_Reconstruction.txt",
+#               sep="\t", quote=F)

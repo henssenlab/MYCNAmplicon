@@ -31,10 +31,10 @@ seqlevels(bins, pruning.mode="coarse") = standardchrs
 
 genes_df = 
   data.frame(
-    "start" = c(14772810, 15307032, 15731302, 16060521, 16080683, 16190549, 16730727, 17691851, 17720393, 17845079),
-    "end" = c(14790933, 15701454, 15771235, 16076139, 16087129, 16225923, 16847599, 17699706, 17838285, 17981509),
-    "name" = c("FAM84A", "NBAS", "DDX1", "MYCNUT", "MYCN", "GACAT3", "FAM49A", "RAD51AP2", "VSNL1", "SMC6"),
-    "class" = rep("gene", 10)
+    "start" = c(12856998, 14772810, 15307032, 15731302, 16060521, 16080683, 16190549, 16730727, 17691851, 17720393, 17845079, 17935125, 17997763, 18059114, 18735989),
+    "end" = c(12882860, 14790933, 15701454, 15771235, 16076139, 16087129, 16225923, 16847599, 17699706, 17838285, 17981509, 17966632, 17998368, 18542882, 18741959),
+    "name" = c("TRIB2", "FAM84A", "NBAS", "DDX1", "MYCNUT", "MYCN", "GACAT3", "FAM49A", "RAD51AP2", "VSNL1", "SMC6", "GEN1", "MSGN1", "KCNS3", "RDH14"),
+    "class" = rep("gene", 15)
   )
 
 # ------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ expression_overview = rnaseq %>%
   mutate(ExprClass = factor(ExprClass, levels=c("no MYCN", "low MYCN", "MYCN-amplified")))
 
 
-# H3K27ac sfor all cell lines
+# H3K27ac for all cell lines
 h3k27ac.fig = 
   as_tibble(h3k27ac) %>%
   inner_join(expression_overview, by="CellType") %>%  
@@ -154,8 +154,6 @@ h3k27ac.fig =
 h3k27ac.fig +
   ggsave("/Volumes/Elements/MYCNAmplicon/Results/BoevaData_H3K27ac_allNBCellLines.pdf", 
          height = 6, width = 3, useDingbats=F)
-
-
 
 # genes.fig = genes_df %>%
 #   ggplot(aes(x=start, y=1)) +

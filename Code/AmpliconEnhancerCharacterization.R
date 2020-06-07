@@ -131,6 +131,9 @@ meanH3K27ac_color = "gold2" #RColorBrewer::brewer.pal(8, "Dark2")[8]
 CRC_color = RColorBrewer::brewer.pal(8, "Dark2")[8]
 
 
+# ------------------------------------------------------------------------------
+# Plot Fig 2c
+# ------------------------------------------------------------------------------
 
 ggsave(
   "/Volumes/Elements/MYCNAmplicon/Results/Fig2c.pdf",
@@ -210,8 +213,9 @@ ggsave(
 
 mart <- useEnsembl(biomart = "ensembl", 
                    dataset = "hsapiens_gene_ensembl", 
-                   mirror = "useast", 
                    GRCh = 37)
+
+mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", host="grch37.ensembl.org", path="/biomart/martservice", dataset="hsapiens_gene_ensembl")
 
 window = GRanges(
   seqnames = rep("chr2", 6),
@@ -283,9 +287,9 @@ for (r in 1:length(window)){
 # Plot CHP-212 fragments
 # ------------------------------------------------------------------------------
 
-mart <- useEnsembl(biomart = "ensembl", 
-                   dataset = "hsapiens_gene_ensembl", 
-                   mirror = "useast", 
+mart <- useEnsembl(biomart = "ensembl",
+                   dataset = "hsapiens_gene_ensembl",
+                   mirror = "asia",
                    GRCh = 37)
 
 window = GRanges(
@@ -347,6 +351,96 @@ for (r in 1:length(window)){
       make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_PHOX2B.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color=CRC_color) +
         theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
       make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_HAND2.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=5, this_color=CRC_color),
+      nrow=12,
+      heights = c(0.5,0.5,1,1,1,1,1,1,1,1,1,1)),
+    height=5, width=2.5, onefile=F, useDingbats=F)
+}
+
+
+# ------------------------------------------------------------------------------
+# Plot CHP-212 amplicon subfragments
+# ------------------------------------------------------------------------------
+
+load("/Users/konstantin/Desktop/ThesisMisc/Genes.Rdata")
+all_genes = makeGRangesFromDataFrame(genes, keep.extra.columns = T)
+
+# mart <- useEnsembl(biomart = "ensembl", 
+#                    dataset = "hsapiens_gene_ensembl", 
+#                    mirror = "useast", 
+#                    GRCh = 37)
+
+window = GRanges(
+  seqnames = rep("chr2", 3),
+  ranges = IRanges(start = c(15722899, 12602640, 11926210),
+                   end   = c(16212599, 12762608, 12142471))
+)
+
+11926210-12142471
+
+for (r in 1:length(window)){
+  roi = window[r]
+  
+  #attributes <- c("hgnc_symbol", "chromosome_name", "start_position", "end_position", "gene_biotype")
+  #filters <- c("chromosome_name","start","end")
+  # genes = getBM(attributes=attributes, 
+  #               filters=filters, values=list(chromosome=gsub("chr", "", as.character(seqnames(roi))),
+  #                                            start=as.character(start(roi)),
+  #                                            end=as.character(end(roi))), 
+  #               mart=mart) %>% 
+  #   as_tibble() %>% 
+  #   filter(hgnc_symbol != "", gene_biotype == "protein_coding") %>%
+  #   mutate(chromosome_name = paste0("chr", chromosome_name)) %>% 
+  #   dplyr::select(hgnc_symbol, chromosome_name, start_position, end_position)
+  # colnames(genes) = c("gene", "seqnames", "start", "end")
+  #genes_df = genes
+  #genes_df = rbind(genes_df, 
+  #                 data.frame(gene="NULLGENE",seqnames="chr2", start=0, end=1))
+  #genes_= makeGRangesFromDataFrame(genes, keep.extra.columns = T)
+  
+  genes = all_genes %>% filter(GeneBiotype == "protein_coding") %>% filter_by_overlaps(roi)
+  genes = genes %>% as_tibble()
+  colnames(genes) = c("seqnames", "start", "end", "length", "strand", "gene", "ensembl", "band", "biotype")
+  genes_df = genes
+  genes_df = rbind(genes_df, 
+                   data.frame(seqnames="chr2",start=0, end=1,length=1, strand="+",
+                              gene = "NULLGENE", ensembl = "NULL",
+                              band = NA, biotype = NA))
+  
+  
+  genes.fig = genes_df %>%
+    ggplot(aes(x=start, y=1)) +
+    geom_rect(xmin=genes_df$start, xmax=genes_df$end, ymin=-Inf, ymax=Inf, color=NA, fill="black") + 
+    theme_kons2() + 
+    theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank(), axis.line.y=element_blank()) +
+    xlim(start(roi),end(roi))
+  
+  ggsave(
+    paste0("/Volumes/Elements/MYCNAmplicon/Results/CHP212_EpigeneticsFig_AmpliconReconstrSubFragments_",
+           as.character(seqnames(roi)),"_",as.character(start(roi)),"_", as.character(end(roi)), 
+           ".pdf"),
+    egg::ggarrange(
+      genes.fig +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()), 
+      ggplot() + theme_void(),
+      make_copynumber_figure("/Volumes/Elements/nb-cl-wgs/nb-cl-wgs-freec/CHP-212/CHP-212_IlluminaWGS.hg19.rmdup.fixRG.bam_CNVs.fillgaps.txt", roi=roi) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-atacseq-results/bam/Mundlos_CHP212_ATAC.trimmed.hg19.rmdup.filterednormed.bw", roi=roi, plot.y.min=0, plot.y.max=50, this_color = ATAC_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CHP212_H3K27ac.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=30, this_color = H3K27ac_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/MundlosLab_CHP-212_H3K4me1.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=15, this_color = H3K4me1_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/MundlosLab_CHP-212_CTCF.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=40, this_color = CTCF_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/Virtual4C/CHP_hg19_canonical_MAPQ30_merged.hic.MYCN4C_Aug28.Normalization_KR_Viewpoint_16075000_16085000_Res_5000.bw", roi=roi, plot.y.min=0, plot.y.max=0.5, this_color=v4C_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/MYCNAmplicon/Results/Boeva_lowMYCNExpr_H3K27ac_MeanFC.bw", roi=roi, plot.y.min=0, plot.y.max=15, this_color="gold3") +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_GATA3.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=2, this_color=CRC_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_PHOX2B.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=3, this_color=CRC_color) +
+        theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x=element_blank()),
+      make_figure("/Volumes/Elements/nb-cl-chipseq-results/bam/Boeva_CLB-GA_HAND2.trimmed.bwa_hg19.rmdup.filtered.bw", roi=roi, plot.y.min=0, plot.y.max=3, this_color=CRC_color),
       nrow=12,
       heights = c(0.5,0.5,1,1,1,1,1,1,1,1,1,1)),
     height=5, width=2.5, onefile=F, useDingbats=F)
